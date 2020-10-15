@@ -11,10 +11,11 @@
 ##### import packages #####
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import stats
 
 ################################################################################
 ##### decide whether or not to save the figure that this script produces #####
-save_figs = 0
+save_figs = False
 out_path_figs = '../../figures/exploratory_figures/'
 
 ################################################################################
@@ -205,7 +206,8 @@ def strategy_2_game_simulation(target_turn_score, target_game_score):
 ##### simulate games to find out the number of turns required to get to 100 points for each strategy #####
 #these strategies require the same number of rolls, on average
 #is there a slight difference, based on the flexibility in score, that manifest in a significant advantage in performance for strategy 2 over the course of 1,000 games or so?
-target_simulated_games = 1000
+np.random.seed(1) #seed the random number generator for reproducibility
+target_simulated_games = 10000
 target_game_score = 100
 n_turns_to_target_score_strat1 = np.empty(target_simulated_games) #initialize an array to record the number of turns it took to achieve the target game score with strategy 1
 n_turns_to_target_score_strat2 = np.empty(target_simulated_games) #initialize an array to record the number of turns it took to achieve the target game score with strategy 2
@@ -222,12 +224,22 @@ print( 'The mean number of turns required to achieve the target game score for W
 print( 'The mean number of turns required to achieve the target game score for WS2 is: {:0.2f}'.format( mean_turns_to_win_strategy_2 ) )
 
 ################################################################################
+##### perform a t-test to determine whether the mean number of turns to win is smaller with strategy 2 #####
+alpha_value = 0.05
+[t_stat, two_side_p_val] = stats.ttest_ind( n_turns_to_target_score_strat2, n_turns_to_target_score_strat1, equal_var=False ) #two-sided t-test, do not assume the distributions have equal variance
+one_side_p_val = two_side_p_val/2
+print( 'p-value = ', two_side_p_val )
+if (t_stat < 0) & (one_side_p_val < alpha_value):
+    print( 'The mean number of turns using strategy 2 is less than that of strategy 1' )
+
+################################################################################
 ##### some color options #####
 #blue color=(0.42, 0.78, 0.90)
 #orange color=(0.96, 0.69, 0.36)
 #yellow color=(0.98, 0.82, 0.33)
 #hot pink color=(0.91, 0.32, 0.51)
 #light pink color=(0.96, 0.76, 0.78)
+
 ################################################################################
 ##### common plot settings #####
 common_line_plot_settings = dict( linewidth=2.0, marker='h', markerfacecolor=(1.0, 1.0, 1.0), markeredgewidth=2)
@@ -263,83 +275,61 @@ if save_figs: #save the figure if you like
     figure_01_name = 'expected_score__and_pig_out_odds_by_roll.pdf'
     plt.savefig( out_path_figs + figure_01_name, dpi=150, format=None, transparent=True ) #facecolor='w', edgecolor='w')
     print( 'Saved figure ' + figure_01_name )
-'''
+
 ################################################################################
-##### plot the probability of not pigging out for n successive rolls in a row #####
+##### plot the score a player can expect from implementing strategy #1 using different set numbers of rolls #####
 fig_02 = plt.figure(figsize=(5,5))
 grid_02 = plt.GridSpec(3,3)
 axes_02 = []
 axes_02.append( fig_02.add_subplot(grid_02[:, :]) )
 
-axes_02[0].set_title('probability of stringing together rolls without pigging out')
+axes_02[0].set_title('strategy 1: always roll n times in a row')
 axes_02[0].set_xlabel('consecutive rolls')
-axes_02[0].set_ylabel('probability we have not pigged out yet')
+axes_02[0].set_ylabel('expected score')
 axes_02[0].set_xlim(0, len(n_rolls)-1)
-axes_02[0].set_ylim(0, 1)
+axes_02[0].set_ylim(0, 20)
 axes_02[0].set_xticks( n_rolls )
-axes_02[0].plot( n_rolls, P_no_pig_out_n_rolls, color=(0.91, 0.32, 0.51), **common_line_plot_settings, markersize=10 )
+axes_02[0].plot( [strategy_1_target_rolls, strategy_1_target_rolls], [0, 20], ':', color=(0,0,0), linewidth=1.0 )
+axes_02[0].plot( [0, len(n_rolls)-1], [one_roll_expected_score, one_roll_expected_score], '--', color=(0.50, 0.50, 0.50), linewidth=2.0 )
+axes_02[0].plot( n_rolls, strategy_1_scores_list, color=(0.42, 0.78, 0.90), **common_line_plot_settings, markersize=10 )
+axes_02[0].annotate('inflection point', xy=(strategy_1_target_rolls, 13), xytext=(7, 15), arrowprops=dict(arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=-90") )
+
+axes_02[0].text( strategy_1_target_rolls - 0.5, 17.5, 'roll more', ha='right', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='green', edgecolor='green', alpha=0.1) )
+axes_02[0].text( strategy_1_target_rolls + 0.5, 17.5, 'roll less', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='red', edgecolor='red', alpha=0.1) )
 
 fig_02.tight_layout()
 
 if save_figs: #save the figure if you like
-    figure_02_name = 'probability_not_pigged_out_by_roll.pdf'
+    figure_02_name = 'game_strategy_1_expected_outcome.pdf'
     plt.savefig( out_path_figs + figure_02_name, dpi=150, format=None, transparent=True ) #facecolor='w', edgecolor='w')
     print( 'Saved figure ' + figure_02_name )
-'''
+
 ################################################################################
-##### plot the score a player can expect from implementing strategy #1 using different set numbers of rolls #####
+##### plot the score a player can expect from implementing strategy #2 when they have different current scores #####
 fig_03 = plt.figure(figsize=(5,5))
 grid_03 = plt.GridSpec(3,3)
 axes_03 = []
 axes_03.append( fig_03.add_subplot(grid_03[:, :]) )
 
-axes_03[0].set_title('strategy 1: always roll n times in a row')
-axes_03[0].set_xlabel('consecutive rolls')
-axes_03[0].set_ylabel('expected score')
-axes_03[0].set_xlim(0, len(n_rolls)-1)
-axes_03[0].set_ylim(0, 20)
-axes_03[0].set_xticks( n_rolls )
-axes_03[0].plot( [strategy_1_target_rolls, strategy_1_target_rolls], [0, 20], ':', color=(0,0,0), linewidth=1.0 )
-axes_03[0].plot( [0, len(n_rolls)-1], [one_roll_expected_score, one_roll_expected_score], '--', color=(0.50, 0.50, 0.50), linewidth=2.0 )
-axes_03[0].plot( n_rolls, strategy_1_scores_list, color=(0.42, 0.78, 0.90), **common_line_plot_settings, markersize=10 )
-axes_03[0].annotate('inflection point', xy=(strategy_1_target_rolls, 13), xytext=(7, 15), arrowprops=dict(arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=-90") )
+axes_03[0].set_title('strategy 2: stop rolling at threshold score')
+axes_03[0].set_xlabel('current score')
+axes_03[0].set_ylabel('expected score after next roll')
+axes_03[0].set_xlim(0, 100)
+axes_03[0].set_ylim(0, 100)
+axes_03[0].plot( [strategy_2_target_score, strategy_2_target_score], [0, 100], ':', color=(0,0,0), linewidth=1.0 )
+axes_03[0].plot( strategy_2_current_scores_list, strategy_2_current_scores_list, '--', color=(0.50, 0.50, 0.50), linewidth=2.0 )
+axes_03[0].plot( strategy_2_current_scores_list, strategy_2_expected_scores_list, color=(0.96, 0.69, 0.36), **common_line_plot_settings, markersize=0 )
+axes_03[0].annotate('intersection', xy=(30.67, 30.67), xytext=(40, 20), arrowprops=dict(arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=-90") )
 
-axes_03[0].text( strategy_1_target_rolls - 0.5, 17.5, 'roll more', ha='right', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='green', edgecolor='green', alpha=0.1) )
-axes_03[0].text( strategy_1_target_rolls + 0.5, 17.5, 'roll less', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='red', edgecolor='red', alpha=0.1) )
+axes_03[0].text( strategy_2_target_score - 5, 80, 'roll again', ha='right', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='green', edgecolor='green', alpha=0.1) )
+axes_03[0].text( strategy_2_target_score + 5, 80, 'stop rolling', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='red', edgecolor='red', alpha=0.1) )
 
 fig_03.tight_layout()
 
 if save_figs: #save the figure if you like
-    figure_03_name = 'game_strategy_1_expected_outcome.pdf'
+    figure_03_name = 'game_strategy_2_expected_outcome.pdf'
     plt.savefig( out_path_figs + figure_03_name, dpi=150, format=None, transparent=True ) #facecolor='w', edgecolor='w')
     print( 'Saved figure ' + figure_03_name )
-
-################################################################################
-##### plot the score a player can expect from implementing strategy #2 when they have different current scores #####
-fig_04 = plt.figure(figsize=(5,5))
-grid_04 = plt.GridSpec(3,3)
-axes_04 = []
-axes_04.append( fig_04.add_subplot(grid_04[:, :]) )
-
-axes_04[0].set_title('strategy 2: stop rolling at threshold score')
-axes_04[0].set_xlabel('current score')
-axes_04[0].set_ylabel('expected score after next roll')
-axes_04[0].set_xlim(0, 100)
-axes_04[0].set_ylim(0, 100)
-axes_04[0].plot( [strategy_2_target_score, strategy_2_target_score], [0, 100], ':', color=(0,0,0), linewidth=1.0 )
-axes_04[0].plot( strategy_2_current_scores_list, strategy_2_current_scores_list, '--', color=(0.50, 0.50, 0.50), linewidth=2.0 )
-axes_04[0].plot( strategy_2_current_scores_list, strategy_2_expected_scores_list, color=(0.96, 0.69, 0.36), **common_line_plot_settings, markersize=0 )
-axes_04[0].annotate('intersection', xy=(30.67, 30.67), xytext=(40, 20), arrowprops=dict(arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=-90") )
-
-axes_04[0].text( strategy_2_target_score - 5, 80, 'roll again', ha='right', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='green', edgecolor='green', alpha=0.1) )
-axes_04[0].text( strategy_2_target_score + 5, 80, 'stop rolling', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='red', edgecolor='red', alpha=0.1) )
-
-fig_04.tight_layout()
-
-if save_figs: #save the figure if you like
-    figure_04_name = 'game_strategy_2_expected_outcome.pdf'
-    plt.savefig( out_path_figs + figure_04_name, dpi=150, format=None, transparent=True ) #facecolor='w', edgecolor='w')
-    print( 'Saved figure ' + figure_04_name )
 
 ################################################################################
 ##### plot a comparison of the two game strategies #####
@@ -348,32 +338,32 @@ turns_to_target_score_bin_settings = [edge - 0.5 for edge in turns_to_target_sco
 turns_to_target_hist_settings = dict(density=False, bins=turns_to_target_score_bin_settings, histtype='stepfilled', alpha=0.6 )
 
 #two histograms. show the distribution of the number of turns required to score 100 points using each strategy
-fig_05 = plt.figure(figsize=(5,5))
-grid_05 = plt.GridSpec(3,3)
-axes_05 = []
-axes_05.append( fig_05.add_subplot(grid_05[:, :]) )
+fig_04 = plt.figure(figsize=(5,5))
+grid_04 = plt.GridSpec(3,3)
+axes_04 = []
+axes_04.append( fig_04.add_subplot(grid_04[:, :]) )
 
-axes_05[0].set_title('comparing game strategies')
-axes_05[0].set_xlabel('number of turns')
-axes_05[0].set_ylabel('number of games')
-axes_05[0].set_xlim(0,25)
-axes_05[0].set_ylim(0,target_simulated_games/5)
+axes_04[0].set_title('comparing game strategies')
+axes_04[0].set_xlabel('number of turns')
+axes_04[0].set_ylabel('number of games')
+axes_04[0].set_xlim(0,25)
+axes_04[0].set_ylim(0,target_simulated_games/5)
 
-axes_05[0].hist( n_turns_to_target_score_strat1, **turns_to_target_hist_settings, color=(0.42, 0.78, 0.90) )
-axes_05[0].hist( n_turns_to_target_score_strat2, **turns_to_target_hist_settings, color=(0.96, 0.69, 0.36) )
+axes_04[0].hist( n_turns_to_target_score_strat1, **turns_to_target_hist_settings, color=(0.42, 0.78, 0.90) )
+axes_04[0].hist( n_turns_to_target_score_strat2, **turns_to_target_hist_settings, color=(0.96, 0.69, 0.36) )
 
-axes_05[0].plot( [mean_turns_to_win_strategy_1, mean_turns_to_win_strategy_1], [0, target_simulated_games/5], '--', linewidth=2.0 )
-axes_05[0].plot( [mean_turns_to_win_strategy_2, mean_turns_to_win_strategy_2], [0, target_simulated_games/5], '--', linewidth=2.0 )
+axes_04[0].plot( [mean_turns_to_win_strategy_1, mean_turns_to_win_strategy_1], [0, target_simulated_games/5], '--', linewidth=2.0 )
+axes_04[0].plot( [mean_turns_to_win_strategy_2, mean_turns_to_win_strategy_2], [0, target_simulated_games/5], '--', linewidth=2.0 )
 
-axes_05[0].text( 20, 1800, 'WS #1', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor=(0.42, 0.78, 0.90), edgecolor=(0.42, 0.78, 0.90), alpha=0.5) )
-axes_05[0].text( 20, 1600, 'WS #2', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor=(0.96, 0.69, 0.36), edgecolor=(0.96, 0.69, 0.36), alpha=0.5) )
+axes_04[0].text( 20, 1800, 'WS #1', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor=(0.42, 0.78, 0.90), edgecolor=(0.42, 0.78, 0.90), alpha=0.5) )
+axes_04[0].text( 20, 1600, 'WS #2', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor=(0.96, 0.69, 0.36), edgecolor=(0.96, 0.69, 0.36), alpha=0.5) )
 
-fig_05.tight_layout()
+fig_04.tight_layout()
 
 if save_figs: #save the figure if you like
-    figure_05_name = 'game_strategy_turns_to_target_histograms.pdf'
-    plt.savefig( out_path_figs + figure_05_name, dpi=150, format=None, transparent=True ) #facecolor='w', edgecolor='w')
-    print( 'Saved figure ' + figure_05_name )
+    figure_04_name = 'game_strategy_turns_to_target_histograms.pdf'
+    plt.savefig( out_path_figs + figure_04_name, dpi=150, format=None, transparent=True ) #facecolor='w', edgecolor='w')
+    print( 'Saved figure ' + figure_04_name )
 
 ################################################################################
 ##### show plots #####
