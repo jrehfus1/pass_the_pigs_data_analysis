@@ -15,7 +15,7 @@ from scipy import stats
 
 ################################################################################
 ##### decide whether or not to save the figure that this script produces #####
-save_figs = False
+save_figs = True
 out_path_figs = '../../figures/exploratory_figures/'
 
 ################################################################################
@@ -284,8 +284,8 @@ axes_02 = []
 axes_02.append( fig_02.add_subplot(grid_02[:, :]) )
 
 axes_02[0].set_title('strategy 1: always roll n times in a row')
-axes_02[0].set_xlabel('consecutive rolls')
-axes_02[0].set_ylabel('expected score')
+axes_02[0].set_xlabel('consecutive rolls in turn')
+axes_02[0].set_ylabel('expected score for turn')
 axes_02[0].set_xlim(0, len(n_rolls)-1)
 axes_02[0].set_ylim(0, 20)
 axes_02[0].set_xticks( n_rolls )
@@ -296,6 +296,9 @@ axes_02[0].annotate('inflection point', xy=(strategy_1_target_rolls, 13), xytext
 
 axes_02[0].text( strategy_1_target_rolls - 0.5, 17.5, 'roll more', ha='right', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='green', edgecolor='green', alpha=0.1) )
 axes_02[0].text( strategy_1_target_rolls + 0.5, 17.5, 'roll less', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='red', edgecolor='red', alpha=0.1) )
+
+axes_02[0].text( 9, 4, 'ES for one roll', ha='center', size=10, color='black', bbox=dict(boxstyle='round', facecolor='black', edgecolor='black', alpha=0.1) )
+axes_02[0].text( 11, 10, 'ES via eq. 4', ha='left', size=10, color='black', bbox=dict(boxstyle='round', facecolor=(0.42, 0.78, 0.90), edgecolor=(0.42, 0.78, 0.90), alpha=0.5) )
 
 fig_02.tight_layout()
 
@@ -312,7 +315,7 @@ axes_03 = []
 axes_03.append( fig_03.add_subplot(grid_03[:, :]) )
 
 axes_03[0].set_title('strategy 2: stop rolling at threshold score')
-axes_03[0].set_xlabel('current score')
+axes_03[0].set_xlabel('current score for turn')
 axes_03[0].set_ylabel('expected score after next roll')
 axes_03[0].set_xlim(0, 100)
 axes_03[0].set_ylim(0, 100)
@@ -321,8 +324,11 @@ axes_03[0].plot( strategy_2_current_scores_list, strategy_2_current_scores_list,
 axes_03[0].plot( strategy_2_current_scores_list, strategy_2_expected_scores_list, color=(0.96, 0.69, 0.36), **common_line_plot_settings, markersize=0 )
 axes_03[0].annotate('intersection', xy=(30.67, 30.67), xytext=(40, 20), arrowprops=dict(arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=-90") )
 
-axes_03[0].text( strategy_2_target_score - 5, 80, 'roll again', ha='right', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='green', edgecolor='green', alpha=0.1) )
-axes_03[0].text( strategy_2_target_score + 5, 80, 'stop rolling', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='red', edgecolor='red', alpha=0.1) )
+axes_03[0].text( strategy_2_target_score - 3, 90, 'roll again', ha='right', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='green', edgecolor='green', alpha=0.1) )
+axes_03[0].text( strategy_2_target_score + 3, 90, 'stop rolling', ha='left', **common_text_annotation_settings, bbox=dict(boxstyle='round', facecolor='red', edgecolor='red', alpha=0.1) )
+
+axes_03[0].text( 70, 75, 'ES = current score', ha='right', size=10, color='black', bbox=dict(boxstyle='round', facecolor='black', edgecolor='black', alpha=0.1) )
+axes_03[0].text( 65, 50, 'ES via eq. 7', ha='left', size=10, color='black', bbox=dict(boxstyle='round', facecolor=(0.96, 0.69, 0.36), edgecolor=(0.96, 0.69, 0.36), alpha=0.5) )
 
 fig_03.tight_layout()
 
